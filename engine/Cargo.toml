@@ -1,0 +1,23 @@
+[package]
+name = "plumppuvox_engine"
+version = "1.0.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+# DeepFilterNet3 real-time speech enhancement (MIT/Apache-2.0). The DFN3 model
+# is compiled into the library through the `default-model` feature.
+deep_filter = { git = "https://github.com/Rikorose/DeepFilterNet.git", rev = "7b14b895fe7fc42cab72b4a4c1e49c982bd6404b", default-features = false, features = ["tract", "default-model"] }
+ndarray = "0.15"
+realfft = "3.3"
+rustfft = "6.2"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+debug = false

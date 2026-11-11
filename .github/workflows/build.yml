@@ -1,0 +1,70 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows-x64
+            os: windows-latest
+          - name: macOS-AppleSilicon
+            os: macos-14
+          - name: Linux-x64
+            os: ubuntu-22.04
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libasound2-dev libx11-dev libxext-dev libxrandr-dev \
+            libxinerama-dev libxcursor-dev libfreetype6-dev libfontconfig1-dev
+
+      - name: Cache Rust build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            build/engine
+          key: engine-${{ matrix.name }}-${{ hashFiles('engine/Cargo.lock', 'engine/src/**') }}
+          restore-keys: engine-${{ matrix.name }}-
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPLUMPPUVOX_BUILD_TOOLS=ON
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Check latency at 44.1, 48 and 96 kHz
+        shell: bash
+        run: |
+          tool=$(find build/plumppuvox_tool_artefacts -type f \( -name plumppuvox_tool -o -name plumppuvox_tool.exe \) | head -1)
+          "$tool" latency 48000 512
+          "$tool" latency 44100 256
+          "$tool" latency 96000 1024
+
+      - name: Ad-hoc sign (macOS)
+        if: runner.os == 'macOS'
+        run: codesign --force --deep --sign - build/PlumppuVox_artefacts/Release/VST3/PlumppuVox.vst3
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir dist
+          cp -R build/PlumppuVox_artefacts/Release/VST3/PlumppuVox.vst3 dist/
+          cp LICENSE README.md dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PlumppuVox-${{ matrix.name }}
+          path: dist
