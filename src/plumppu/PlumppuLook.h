@@ -44,6 +44,8 @@ inline const juce::Colour bakelite { 0xff1a1817 };   // black bakelite of the co
 // B612 for labels and small text, B612 Mono for numeric readouts.
 juce::Font labelFont (float height, bool bold = false, float tracking = 0.0f);
 juce::Font readoutFont (float height);
+// Barlow Black, for the model name in the logo.
+juce::Font modelFont (float height, float tracking = 0.0f);
 
 // How a surface reflects light. reflectance is the specular reflectance seen
 // head on (about 0.04 for plastics, much higher for metal), roughness runs
@@ -148,8 +150,23 @@ struct PanelLayout
     float bandThickness = 50.0f;
 };
 
-// Ivory panel with the blue cross and corner screws.
-void buildPanel (Surface&, juce::Rectangle<float> bounds, const PanelLayout&);
+// The panel's powder coat and the paint of its cross. The defaults are the
+// Finnish flag (white coat, blue cross).
+struct PanelStyle
+{
+    Material coat = materials::whiteCoat;
+    Material cross = materials::brushedBlue;
+};
+
+// Powder-coated panel with a painted cross and corner screws.
+void buildPanel (Surface&, juce::Rectangle<float> bounds, const PanelLayout&, const PanelStyle& style = {});
+
+// The PlumppuVox logo, right-aligned at `right` from `top`: "Plumppu" and a
+// "Vox" badge on the first line, the model name below in Barlow Black and a
+// small tagline under it. `paint` colours the lettering and the badge,
+// `badgeText` the "Vox" on the badge. Returns the bottom of the logo.
+float buildLogo (Surface&, float right, float top, const juce::String& model, const juce::String& tagline,
+                 const Material& paint, const Material& badgeText);
 
 // Spun aluminium scale plate for a rotary control. Labels are spread evenly
 // from startAngle to endAngle; minorPerMajor ticks sit between two labels.
@@ -187,6 +204,9 @@ void drawReadout (juce::Graphics&, juce::Rectangle<float> area, const juce::Stri
 // with drawLampRow(), where level runs from 0 (all dark) to lampCount (all lit).
 void buildLampSockets (Surface&, juce::Rectangle<float> area, int lampCount);
 void drawLampRow (juce::Graphics&, juce::Rectangle<float> area, int lampCount, float level);
+// The same row with each lamp's brightness (0..1) given by brightness (index).
+void drawLamps (juce::Graphics&, juce::Rectangle<float> area, int lampCount,
+                const std::function<float (int)>& brightness);
 
 // Black Meccano gear wheel with a brass dome nut, used as a knob. The slider's bounds must leave
 // knobShadowMargin around the knob for its shadow.

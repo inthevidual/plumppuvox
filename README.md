@@ -1,9 +1,9 @@
-# PlumppuVox
+# PlumppuVox Ren
 
 A one-knob voice isolation plugin (VST3). Turn the dial from 0 to 100 to remove
 background noise, breaths, clicks and room sound from speech, in real time.
 
-<img src="docs/screenshot.png" width="420" alt="PlumppuVox interface">
+<img src="docs/screenshot.png" width="420" alt="PlumppuVox Ren interface">
 
 - **0** leaves the audio untouched, **100** keeps only the voice. **80**, the
   default, is the everyday setting.
@@ -66,8 +66,8 @@ screenshot of the interface.
 
 - `engine/` – Rust static library: DeepFilterNet plus the level and contrast stages, behind a small C API
 - `src/` – the JUCE plugin (processing, sample rate conversion, interface)
-- `src/plumppu/` – the shared Plumppu look (metal panel, Finnish cross, knob,
-  lamps, fonts), written to be reused by other Plumppu plugins
+- `src/plumppu/` – the shared Plumppu look (metal panel, flag cross, knob,
+  lamps, logo, fonts), identical in its sibling PlumppuVox Lagom, a volume rider
 - `assets/fonts/` – the B612 typeface used for labels and readouts
 - `patches/` – a small JUCE patch that works around a VST3 bug in Audacity on Linux
 - `tools/` – development tool
@@ -75,5 +75,5 @@ screenshot of the interface.
 ## License
 
 PlumppuVox is released under the GNU AGPL v3 (see `LICENSE`), as required by
-JUCE. DeepFilterNet is MIT / Apache-2.0 licensed. The B612 fonts are under the
-SIL Open Font License (`assets/fonts/OFL.txt`).
+JUCE. DeepFilterNet is MIT / Apache-2.0 licensed. The B612 and Barlow fonts are
+under the SIL Open Font License (`assets/fonts/OFL.txt`, `assets/fonts/OFL-Barlow.txt`).

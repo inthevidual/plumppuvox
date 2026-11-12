@@ -14,7 +14,9 @@ constexpr float angleEnd = juce::MathConstants<float>::pi * 2.75f;
 
 // Right-hand column
 constexpr float columnCentre = 331.0f;
-const juce::Rectangle<float> readoutArea { columnCentre - 46.0f, 138.0f, 92.0f, 36.0f };
+// The readout sits below the two-line logo (buildLogo ends at y = 121)
+constexpr float logoTop = 28.0f;
+const juce::Rectangle<float> readoutArea { columnCentre - 46.0f, 163.0f, 92.0f, 36.0f };
 const juce::Rectangle<float> lampArea { columnCentre - 70.0f, 300.0f, 140.0f, 13.0f };
 constexpr int lampCount = 10;
 constexpr float dbPerLamp = 3.0f;
@@ -74,29 +76,7 @@ void PlumppuVoxEditor::renderFaceplate()
     buildDialPlate (s, panelLayout.crossCentre, dialRadius, angleStart, angleEnd,
                     { "0", "20", "40", "60", "80", "100" });
 
-    // Logo: "Plumppu" engraved and filled blue; "Vox" on a painted blue badge,
-    // engraved and filled with white paint
-    {
-        const auto font = juce::Font (juce::FontOptions (30.0f, juce::Font::bold)).withExtraKerningFactor (-0.01f);
-        const juce::String first ("Plumppu"), second ("Vox");
-        const float w1 = juce::GlyphArrangement::getStringWidth (font, first);
-        const float w2 = juce::GlyphArrangement::getStringWidth (font, second);
-        const float pad = 7.0f, gap = 5.0f;
-        const float right = (float) editorWidth - 34.0f;
-        const float x = right - (w1 + gap + w2 + 2 * pad);
-        const float y = 30.0f, h = 38.0f;
-
-        engraveText (s, first, font, { x, y, w1 + 2.0f, h }, juce::Justification::centredLeft, materials::bluePaint, 0.8f);
-
-        const juce::Rectangle<float> badge (x + w1 + gap, y + 1.0f, w2 + 2 * pad, h - 2.0f);
-        paintOn (s, s.mask ([&] (juce::Graphics& g) { g.fillRoundedRectangle (badge, 5.0f); }), materials::bluePaint);
-        engraveText (s, second, font, badge.translated (0.0f, -1.0f), juce::Justification::centred, materials::whiteInk, 0.8f);
-
-        engraveText (s, "VOICE ISOLATOR", labelFont (9.5f, true, 0.30f), { x, y + h + 3.0f, right - x, 12.0f },
-                     juce::Justification::centredRight);
-        engrave (s, s.mask ([&] (juce::Graphics& g) { g.fillRect (x, y + h + 20.0f, right - x, 1.0f); }),
-                 materials::engravingFill, 0.6f);
-    }
+    buildLogo (s, (float) editorWidth - 34.0f, logoTop, "REN", "VOICE ISOLATOR", materials::bluePaint, materials::whiteInk);
 
     const auto heading = labelFont (10.0f, true, 0.24f);
     engraveText (s, "AMOUNT", heading, { columnCentre - 70.0f, readoutArea.getY() - 23.0f, 140.0f, 12.0f }, juce::Justification::centred);

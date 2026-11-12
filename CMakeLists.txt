@@ -79,6 +79,7 @@ endif()
 # ------------------------------------------------------------------- Plugin
 juce_add_plugin(PlumppuVox
     PRODUCT_NAME "PlumppuVox"
+    PLUGIN_NAME "PlumppuVox Ren"
     COMPANY_NAME "Plumppu"
     BUNDLE_ID "com.plumppu.plumppuvox"
     PLUGIN_MANUFACTURER_CODE Plmp
@@ -91,11 +92,12 @@ juce_add_plugin(PlumppuVox
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE
     COPY_PLUGIN_AFTER_BUILD ${PLUMPPUVOX_COPY_AFTER_BUILD})
 
-# Fonts for the shared Plumppu look (B612, SIL Open Font License).
+# Fonts for the shared Plumppu look (B612 and Barlow, SIL Open Font License).
 juce_add_binary_data(PlumppuAssets SOURCES
     assets/fonts/B612-Regular.ttf
     assets/fonts/B612-Bold.ttf
-    assets/fonts/B612Mono-Bold.ttf)
+    assets/fonts/B612Mono-Bold.ttf
+    assets/fonts/Barlow-Black.ttf)
 
 set(PLUMPPUVOX_SOURCES
     src/PluginProcessor.cpp
@@ -143,7 +145,7 @@ if(PLUMPPUVOX_BUILD_TOOLS)
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
         JUCE_STANDALONE_APPLICATION=1
-        JucePlugin_Name="PlumppuVox"
+        JucePlugin_Name="PlumppuVox Ren"
         JucePlugin_Build_Standalone=1
         JucePlugin_IsSynth=0
         JucePlugin_WantsMidiInput=0

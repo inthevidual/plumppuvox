@@ -195,6 +195,12 @@ juce::Font readoutFont (float height)
     return fontFrom (mono, height, 0.0f);
 }
 
+juce::Font modelFont (float height, float tracking)
+{
+    static const auto heavy = loadTypeface (BinaryData::BarlowBlack_ttf, BinaryData::BarlowBlack_ttfSize);
+    return fontFrom (heavy, height, tracking);
+}
+
 //==============================================================================
 float Map::clamped (int x, int y) const
 {
@@ -542,7 +548,7 @@ void buildPlate (Surface& s, juce::Rectangle<float> area, float corner, float he
 // and carry a small ridge of paint where the tape was, brush marks running
 // along each band, and colour that varies with the thickness of the paint.
 void paintCross (Surface& s, juce::Rectangle<float> clip, float clipCorner,
-                 juce::Rectangle<float> vertical, juce::Rectangle<float> horizontal)
+                 juce::Rectangle<float> vertical, juce::Rectangle<float> horizontal, const Material& paint)
 {
     juce::Random random (0x464c4147);
 
@@ -603,7 +609,7 @@ void paintCross (Surface& s, juce::Rectangle<float> clip, float clipCorner,
         auto& h = s.heightAt (px, py);
         h += cover * (0.05f + 0.03f * stroke + 0.01f * bristle + 0.015f * blotches (px, py) + 0.05f * pooled);
 
-        s.setMaterial (px, py, materials::brushedBlue, cover);
+        s.setMaterial (px, py, paint, cover);
         // Thin paint lets the white coat glow through; thick paint and the
         // pool along the tape edge are darker
         const float thin = 0.09f * stroke + 0.035f * bristle + 0.05f * blotches (px, py) - 0.16f * pooled;
@@ -611,7 +617,7 @@ void paintCross (Surface& s, juce::Rectangle<float> clip, float clipCorner,
     });
 }
 
-void buildPanel (Surface& s, juce::Rectangle<float> bounds, const PanelLayout& layout)
+void buildPanel (Surface& s, juce::Rectangle<float> bounds, const PanelLayout& layout, const PanelStyle& style)
 {
     const auto panel = bounds.reduced (4.0f);
     const float corner = 9.0f;
@@ -629,7 +635,7 @@ void buildPanel (Surface& s, juce::Rectangle<float> bounds, const PanelLayout& l
             return;
 
         s.heightAt (px, py) = cover * (panelHeight - 2.2f * (1.0f - roundOver (d / chamfer)));
-        s.setMaterial (px, py, materials::whiteCoat, cover);
+        s.setMaterial (px, py, style.coat, cover);
     });
 
     // Powder coat is never perfectly flat: a faint orange peel
@@ -654,18 +660,49 @@ void buildPanel (Surface& s, juce::Rectangle<float> bounds, const PanelLayout& l
         });
     }
 
-    // Blue cross, painted over the coat
+    // The cross, painted over the coat
     const float t = layout.bandThickness;
     const juce::Rectangle<float> vertical (layout.crossCentre.x - t * 0.5f, panel.getY(), t, panel.getHeight());
     const juce::Rectangle<float> horizontal (panel.getX(), layout.crossCentre.y - t * 0.5f, panel.getWidth(), t);
 
-    paintCross (s, panel.reduced (0.8f), corner - 0.8f, vertical, horizontal);
+    paintCross (s, panel.reduced (0.8f), corner - 0.8f, vertical, horizontal, style.cross);
 
     const float inset = 18.0f;
     buildScrew (s, { panel.getX() + inset, panel.getY() + inset }, 5.0f, 0.6f);
     buildScrew (s, { panel.getRight() - inset, panel.getY() + inset }, 5.0f, 2.2f);
     buildScrew (s, { panel.getX() + inset, panel.getBottom() - inset }, 5.0f, 1.4f);
     buildScrew (s, { panel.getRight() - inset, panel.getBottom() - inset }, 5.0f, 2.9f);
+}
+
+float buildLogo (Surface& s, float right, float top, const juce::String& model, const juce::String& tagline,
+                 const Material& paint, const Material& badgeText)
+{
+    const float width = 240.0f;
+    float y = top;
+
+    // "Plumppu" engraved and filled, "Vox" engraved into a painted badge
+    {
+        const auto font = labelFont (24.0f, true, -0.01f);
+        const float w1 = juce::GlyphArrangement::getStringWidth (font, "Plumppu");
+        const float w2 = juce::GlyphArrangement::getStringWidth (font, "Vox");
+        const float pad = 6.0f, gap = 4.0f, h = 30.0f;
+        const float x = right - (w1 + gap + w2 + 2 * pad);
+        engraveText (s, "Plumppu", font, { x, y, w1 + 2.0f, h }, juce::Justification::centredLeft, paint, 0.8f);
+        const juce::Rectangle<float> badge (x + w1 + gap, y + 1.0f, w2 + 2 * pad, h - 2.0f);
+        paintOn (s, s.mask ([&] (juce::Graphics& g) { g.fillRoundedRectangle (badge, 4.0f); }), paint);
+        engraveText (s, "Vox", font, badge.translated (0.0f, -1.0f), juce::Justification::centred, badgeText, 0.8f);
+        y += h + 2.0f;
+    }
+
+    // The model name in the black weight
+    const float lineHeight = 44.0f;
+    engraveText (s, model, modelFont (46.0f, 0.04f), { right - width, y + 2.0f, width, lineHeight },
+                 juce::Justification::centredRight, paint, 0.8f);
+    y += lineHeight + 6.0f;
+
+    engraveText (s, tagline, labelFont (9.0f, true, 0.30f), { right - width, y, width, 11.0f },
+                 juce::Justification::centredRight, paint);
+    return y + 11.0f;
 }
 
 void paintOn (Surface& s, const Map& coverage, const Material& m)
@@ -900,6 +937,12 @@ void buildLampSockets (Surface& s, juce::Rectangle<float> area, int lampCount)
 
 void drawLampRow (juce::Graphics& g, juce::Rectangle<float> area, int lampCount, float level)
 {
+    drawLamps (g, area, lampCount, [level] (int i) { return juce::jlimit (0.0f, 1.0f, level - (float) i); });
+}
+
+void drawLamps (juce::Graphics& g, juce::Rectangle<float> area, int lampCount,
+                const std::function<float (int)>& brightness)
+{
     static JewelCache cache;
     const auto geometry = lampGeometry (area, lampCount);
     const float scale = juce::jmax (1.0f, g.getInternalContext().getPhysicalPixelScaleFactor());
@@ -917,7 +960,7 @@ void drawLampRow (juce::Graphics& g, juce::Rectangle<float> area, int lampCount,
 
     for (int i = 0; i < lampCount; ++i)
     {
-        const float lit = juce::jlimit (0.0f, 1.0f, level - (float) i);
+        const float lit = juce::jlimit (0.0f, 1.0f, brightness (i));
         const auto c = geometry.centre (area, i);
         const auto box = juce::Rectangle<float> (size, size).withCentre (c);
 
