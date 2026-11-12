@@ -2,7 +2,9 @@
 
 A one-knob voice isolation plugin (VST3). Its sibling, the volume rider
 [PlumppuVox Lagom](lagom/README.md), lives in this repository too and is
-built and released alongside it.
+built and released alongside it, and so is
+[Plumppu Radiomix](radiomix/README.md), a desktop app that automixes
+recordings with one speaker per channel using both plugins' processing.
 
 Turn the dial from 0 to 100 to remove
 background noise, breaths, clicks and room sound from speech, in real time.
@@ -75,6 +77,7 @@ screenshot of the interface.
 - `src/plumppu/` – the shared Plumppu look (metal panel, flag cross, knob,
   lamps, logo, lever switch, fonts), used by both plugins
 - `lagom/` – PlumppuVox Lagom, the volume rider
+- `radiomix/` – Plumppu Radiomix, the automix app
 - `assets/fonts/` – the B612 typeface used for labels and readouts
 - `patches/` – a small JUCE patch that works around a VST3 bug in Audacity on Linux
 - `tools/` – development tool
@@ -83,4 +86,5 @@ screenshot of the interface.
 
 PlumppuVox is released under the GNU AGPL v3 (see `LICENSE`), as required by
 JUCE. DeepFilterNet is MIT / Apache-2.0 licensed. The B612 and Barlow fonts are
-under the SIL Open Font License (`assets/fonts/OFL.txt`, `assets/fonts/OFL-Barlow.txt`).
+under the SIL Open Font License (`assets/fonts/OFL.txt`, `assets/fonts/OFL-Barlow.txt`),
+as is Matrix Sans, used by Radiomix (`assets/fonts/OFL-MatrixSans.txt`).

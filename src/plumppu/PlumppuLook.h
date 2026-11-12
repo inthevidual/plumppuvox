@@ -156,6 +156,7 @@ struct PanelStyle
 {
     Material coat = materials::whiteCoat;
     Material cross = materials::brushedBlue;
+    bool withCross = true;   // false: a plain panel (Plumppu Radiomix)
 };
 
 // Powder-coated panel with a painted cross and corner screws.

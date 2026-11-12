@@ -184,6 +184,57 @@ if(UNIX AND NOT APPLE)
 endif()
 
 
+# ------------------------------------------------------- Plumppu Radiomix
+# Standalone app (radiomix/): automixes a recording with one speaker per
+# channel, using Ren's engine and Lagom's rider on each mic, cppod's automix
+# between them and Lagom once more on the mix.
+option(PLUMPPUVOX_BUILD_RADIOMIX "Build the Plumppu Radiomix app" ON)
+
+if(PLUMPPUVOX_BUILD_RADIOMIX)
+    juce_add_gui_app(PlumppuRadiomix
+        PRODUCT_NAME "Plumppu Radiomix"
+        COMPANY_NAME "Plumppu"
+        BUNDLE_ID "com.plumppu.radiomix"
+        DOCUMENT_EXTENSIONS mp4 mov mkv webm m4v wav aif aiff flac mp3 ogg m4a aac)
+
+    juce_add_binary_data(RadiomixData
+        HEADER_NAME RadiomixData.h
+        NAMESPACE RadiomixData
+        SOURCES
+            radiomix/assets/plumppu-radiomix.svg
+            assets/fonts/MatrixSansPrint-Regular.ttf
+            assets/fonts/MatrixMonoPrintSC-Regular.ttf)
+
+    target_sources(PlumppuRadiomix PRIVATE
+        radiomix/src/Main.cpp
+        radiomix/src/Console.cpp
+        radiomix/src/Faceplate.cpp
+        radiomix/src/Mixer.cpp
+        radiomix/src/Automix.cpp
+        radiomix/src/Media.cpp
+        lagom/src/Rider.cpp
+        src/plumppu/PlumppuLook.cpp)
+    target_include_directories(PlumppuRadiomix PRIVATE radiomix/src lagom/src src)
+
+    target_compile_definitions(PlumppuRadiomix PRIVATE
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0
+        JUCE_USE_MP3AUDIOFORMAT=1
+        JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:PlumppuRadiomix,JUCE_PRODUCT_NAME>"
+        JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:PlumppuRadiomix,JUCE_VERSION>")
+
+    target_link_libraries(PlumppuRadiomix
+        PRIVATE
+            juce::juce_audio_formats
+            juce::juce_gui_basics
+            plumppuvox_engine
+            PlumppuAssets
+            RadiomixData
+        PUBLIC
+            juce::juce_recommended_config_flags
+            juce::juce_recommended_lto_flags)
+endif()
+
 # ---------------------------------------------------------------- Dev tools
 if(PLUMPPUVOX_BUILD_TOOLS)
     juce_add_console_app(plumppuvox_tool PRODUCT_NAME "plumppuvox_tool")

@@ -63,11 +63,18 @@ jobs:
             "$tool" selfcheck
           done
 
+      - name: Radiomix self-check (two synthetic mics; levelling, automix, outputs)
+        shell: bash
+        run: |
+          app=$(find build/PlumppuRadiomix_artefacts -type f \( -name "Plumppu Radiomix" -o -name "Plumppu Radiomix.exe" \) | head -1)
+          "$app" --selfcheck
+
       - name: Ad-hoc sign (macOS)
         if: runner.os == 'macOS'
         run: |
           codesign --force --deep --sign - build/PlumppuVox_artefacts/Release/VST3/PlumppuVox.vst3
           codesign --force --deep --sign - build/PlumppuLagom_artefacts/Release/VST3/PlumppuLagom.vst3
+          codesign --force --deep --sign - "build/PlumppuRadiomix_artefacts/Release/Plumppu Radiomix.app"
 
       - name: Package
         shell: bash
@@ -78,6 +85,15 @@ jobs:
           cp -R build/PlumppuLagom_artefacts/Release/VST3/PlumppuLagom.vst3 dist-lagom/
           cp LICENSE dist-lagom/
           cp lagom/README.md dist-lagom/
+          mkdir dist-radiomix
+          if [ "$RUNNER_OS" = macOS ]; then
+            cp -R "build/PlumppuRadiomix_artefacts/Release/Plumppu Radiomix.app" dist-radiomix/
+          elif [ "$RUNNER_OS" = Windows ]; then
+            cp "build/PlumppuRadiomix_artefacts/Release/Plumppu Radiomix.exe" dist-radiomix/
+          else
+            cp "build/PlumppuRadiomix_artefacts/Release/Plumppu Radiomix" dist-radiomix/
+          fi
+          cp LICENSE radiomix/README.md dist-radiomix/
 
       - uses: actions/upload-artifact@v4
         with:
@@ -88,6 +104,11 @@ jobs:
         with:
           name: PlumppuLagom-${{ matrix.name }}
           path: dist-lagom
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PlumppuRadiomix-${{ matrix.name }}
+          path: dist-radiomix
 
       # Zipped on each platform with its own tool, so the macOS bundles keep
       # their signatures and permissions intact.
@@ -108,6 +129,16 @@ jobs:
           }
           zipit dist PlumppuVox
           zipit dist-lagom PlumppuLagom
+          # the app: everything in its folder
+          radiozip="$PWD/release/PlumppuRadiomix-${{ matrix.name }}.zip"
+          ( cd dist-radiomix
+            if [ "$RUNNER_OS" = macOS ]; then
+              ditto -c -k --keepParent "Plumppu Radiomix.app" "$radiozip"
+            elif [ "$RUNNER_OS" = Windows ]; then
+              7z a -tzip "$radiozip" . > /dev/null
+            else
+              zip -qry "$radiozip" .
+            fi )
 
       - uses: actions/upload-artifact@v4
         with:

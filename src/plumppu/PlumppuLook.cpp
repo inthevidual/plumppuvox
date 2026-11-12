@@ -665,7 +665,8 @@ void buildPanel (Surface& s, juce::Rectangle<float> bounds, const PanelLayout& l
     const juce::Rectangle<float> vertical (layout.crossCentre.x - t * 0.5f, panel.getY(), t, panel.getHeight());
     const juce::Rectangle<float> horizontal (panel.getX(), layout.crossCentre.y - t * 0.5f, panel.getWidth(), t);
 
-    paintCross (s, panel.reduced (0.8f), corner - 0.8f, vertical, horizontal, style.cross);
+    if (style.withCross)
+        paintCross (s, panel.reduced (0.8f), corner - 0.8f, vertical, horizontal, style.cross);
 
     const float inset = 18.0f;
     buildScrew (s, { panel.getX() + inset, panel.getY() + inset }, 5.0f, 0.6f);
