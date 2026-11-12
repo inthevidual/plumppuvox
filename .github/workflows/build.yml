@@ -43,7 +43,12 @@ jobs:
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPLUMPPUVOX_BUILD_TOOLS=ON
 
       - name: Build
-        run: cmake --build build --config Release --parallel
+        shell: bash
+        # One compile per core: a bare --parallel lets make start every file
+        # at once, which ran the Linux runner out of memory and crawled on macOS
+        run: |
+          cores=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+          cmake --build build --config Release --parallel "$cores"
 
       - name: Check latency at 44.1, 48 and 96 kHz
         shell: bash
