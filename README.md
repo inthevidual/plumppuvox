@@ -1,6 +1,10 @@
 # PlumppuVox Ren
 
-A one-knob voice isolation plugin (VST3). Turn the dial from 0 to 100 to remove
+A one-knob voice isolation plugin (VST3). Its sibling, the volume rider
+[PlumppuVox Lagom](lagom/README.md), lives in this repository too and is
+built and released alongside it.
+
+Turn the dial from 0 to 100 to remove
 background noise, breaths, clicks and room sound from speech, in real time.
 
 <img src="docs/screenshot.png" width="420" alt="PlumppuVox Ren interface">
@@ -55,10 +59,12 @@ JUCE is downloaded automatically.
     cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
     cmake --build build --config Release
 
-The plugin ends up in `build/PlumppuVox_artefacts/Release/VST3/`. Add
-`-DPLUMPPUVOX_COPY_AFTER_BUILD=ON` to install it into your plugin folder.
+The plugin ends up in `build/PlumppuVox_artefacts/Release/VST3/` (and Lagom in
+`build/PlumppuLagom_artefacts/Release/VST3/`). Add
+`-DPLUMPPUVOX_COPY_AFTER_BUILD=ON` to install them into your plugin folder.
 
-`-DPLUMPPUVOX_BUILD_TOOLS=ON` also builds `plumppuvox_tool`, which renders a WAV
+`-DPLUMPPUVOX_BUILD_TOOLS=ON` also builds `plumppuvox_tool` (and Lagom's
+`plumppulagom_tool`); `plumppuvox_tool` renders a WAV
 file through the plugin offline, checks the reported latency and writes a
 screenshot of the interface.
 
@@ -67,7 +73,8 @@ screenshot of the interface.
 - `engine/` – Rust static library: DeepFilterNet plus the level and contrast stages, behind a small C API
 - `src/` – the JUCE plugin (processing, sample rate conversion, interface)
 - `src/plumppu/` – the shared Plumppu look (metal panel, flag cross, knob,
-  lamps, logo, fonts), identical in its sibling PlumppuVox Lagom, a volume rider
+  lamps, logo, lever switch, fonts), used by both plugins
+- `lagom/` – PlumppuVox Lagom, the volume rider
 - `assets/fonts/` – the B612 typeface used for labels and readouts
 - `patches/` – a small JUCE patch that works around a VST3 bug in Audacity on Linux
 - `tools/` – development tool

@@ -16,8 +16,8 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
-option(PLUMPPUVOX_BUILD_TOOLS "Build the offline render / test tool" OFF)
-option(PLUMPPUVOX_COPY_AFTER_BUILD "Install the plugin into the user plugin folder after building" OFF)
+option(PLUMPPUVOX_BUILD_TOOLS "Build the offline render / test tools" OFF)
+option(PLUMPPUVOX_COPY_AFTER_BUILD "Install the plugins into the user plugin folder after building" OFF)
 
 # --------------------------------------------------------------------- JUCE
 include(FetchContent)
@@ -134,6 +134,56 @@ if(UNIX AND NOT APPLE)
         -Wl,--no-undefined)
 endif()
 
+# ------------------------------------------------------- PlumppuVox Lagom
+# The volume rider (lagom/). Plain C++, no engine; shares the look and fonts.
+juce_add_plugin(PlumppuLagom
+    PRODUCT_NAME "PlumppuLagom"
+    PLUGIN_NAME "PlumppuVox Lagom"
+    COMPANY_NAME "Plumppu"
+    BUNDLE_ID "com.plumppu.plumppulagom"
+    PLUGIN_MANUFACTURER_CODE Plmp
+    PLUGIN_CODE PLgm
+    FORMATS VST3
+    VST3_CATEGORIES Fx Dynamics
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT FALSE
+    NEEDS_MIDI_OUTPUT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    COPY_PLUGIN_AFTER_BUILD ${PLUMPPUVOX_COPY_AFTER_BUILD})
+
+set(PLUMPPULAGOM_SOURCES
+    lagom/src/PluginProcessor.cpp
+    lagom/src/PluginEditor.cpp
+    lagom/src/Rider.cpp
+    src/plumppu/PlumppuLook.cpp)
+
+target_sources(PlumppuLagom PRIVATE ${PLUMPPULAGOM_SOURCES})
+# lagom/src first: both plugins have a PluginProcessor.h
+target_include_directories(PlumppuLagom PRIVATE lagom/src src)
+
+target_compile_definitions(PlumppuLagom PUBLIC
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_VST3_CAN_REPLACE_VST2=0
+    JUCE_DISPLAY_SPLASH_SCREEN=0)
+
+target_link_libraries(PlumppuLagom
+    PRIVATE
+        juce::juce_audio_utils
+        PlumppuAssets
+    PUBLIC
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_lto_flags)
+
+if(UNIX AND NOT APPLE)
+    target_link_options(PlumppuLagom PUBLIC
+        -Wl,--exclude-libs,ALL
+        -Wl,-Bsymbolic
+        -Wl,-z,nodelete
+        -Wl,--no-undefined)
+endif()
+
+
 # ---------------------------------------------------------------- Dev tools
 if(PLUMPPUVOX_BUILD_TOOLS)
     juce_add_console_app(plumppuvox_tool PRODUCT_NAME "plumppuvox_tool")
@@ -155,6 +205,26 @@ if(PLUMPPUVOX_BUILD_TOOLS)
     target_link_libraries(plumppuvox_tool PRIVATE
         juce::juce_audio_utils
         plumppuvox_engine
+        PlumppuAssets
+        juce::juce_recommended_config_flags)
+    juce_add_console_app(plumppulagom_tool PRODUCT_NAME "plumppulagom_tool")
+    target_sources(plumppulagom_tool PRIVATE
+        lagom/tools/tool.cpp
+        ${PLUMPPULAGOM_SOURCES})
+    target_include_directories(plumppulagom_tool PRIVATE lagom/src src)
+    target_compile_definitions(plumppulagom_tool PRIVATE
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0
+        JUCE_STANDALONE_APPLICATION=1
+        JucePlugin_Name="PlumppuVox Lagom"
+        JucePlugin_Build_Standalone=1
+        JucePlugin_IsSynth=0
+        JucePlugin_WantsMidiInput=0
+        JucePlugin_ProducesMidiOutput=0
+        JucePlugin_IsMidiEffect=0
+        JucePlugin_EditorRequiresKeyboardFocus=0)
+    target_link_libraries(plumppulagom_tool PRIVATE
+        juce::juce_audio_utils
         PlumppuAssets
         juce::juce_recommended_config_flags)
 endif()
