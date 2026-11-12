@@ -68,3 +68,51 @@ jobs:
         with:
           name: PlumppuVox-${{ matrix.name }}
           path: dist
+
+      # Zipped on each platform with its own tool, so the macOS bundle keeps
+      # its signature and permissions intact.
+      - name: Zip for release
+        shell: bash
+        run: |
+          mkdir release
+          zipfile="$PWD/release/PlumppuVox-${{ matrix.name }}.zip"
+          cd dist
+          if [ "$RUNNER_OS" = macOS ]; then
+            ditto -c -k --keepParent PlumppuVox.vst3 "$zipfile"
+          elif [ "$RUNNER_OS" = Windows ]; then
+            7z a -tzip "$zipfile" PlumppuVox.vst3 > /dev/null
+          else
+            zip -qry "$zipfile" PlumppuVox.vst3
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.name }}
+          path: release
+
+  # Every push to main replaces the "main-build" release, so its download
+  # links always point at the newest build.
+  release:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency: release
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: release
+
+      - name: Publish main-build release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release delete main-build --yes --cleanup-tag || true
+          gh release create main-build release/*.zip \
+            --target "$GITHUB_SHA" \
+            --title "Latest build from main" \
+            --notes "Built automatically from ${GITHUB_SHA::7}."
