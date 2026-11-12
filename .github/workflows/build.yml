@@ -53,6 +53,12 @@ jobs:
           "$tool" latency 44100 256
           "$tool" latency 96000 1024
 
+      - name: Check colours and interface rendering
+        shell: bash
+        run: |
+          tool=$(find build/plumppuvox_tool_artefacts -type f \( -name plumppuvox_tool -o -name plumppuvox_tool.exe \) | head -1)
+          "$tool" selfcheck
+
       - name: Ad-hoc sign (macOS)
         if: runner.os == 'macOS'
         run: codesign --force --deep --sign - build/PlumppuVox_artefacts/Release/VST3/PlumppuVox.vst3

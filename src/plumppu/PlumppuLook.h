@@ -27,13 +27,18 @@
 // KnobLook.
 namespace plumppu
 {
+// These must stay `inline`: the inline materials below copy them during static
+// initialisation, and C++ only orders that against other inline variables
+// defined earlier in the same header. As plain `const` (one copy per file)
+// Apple's toolchain initialised the materials first, which turned every blue
+// part of the panel transparent black on macOS.
 namespace colours
 {
-const juce::Colour flagBlue { 0xff003580 };  // official Finnish flag blue
-const juce::Colour enamelWhite { 0xfff4f2ea };
-const juce::Colour ivory { 0xffe9e2d0 };       // cream bakelite of the panel
-const juce::Colour engraving { 0xff14233d };  // printed legends on the panel
-const juce::Colour bakelite { 0xff1a1817 };   // black bakelite of the controls
+inline const juce::Colour flagBlue { 0xff003580 };  // official Finnish flag blue
+inline const juce::Colour enamelWhite { 0xfff4f2ea };
+inline const juce::Colour ivory { 0xffe9e2d0 };       // cream bakelite of the panel
+inline const juce::Colour engraving { 0xff14233d };  // printed legends on the panel
+inline const juce::Colour bakelite { 0xff1a1817 };   // black bakelite of the controls
 }
 
 // B612 for labels and small text, B612 Mono for numeric readouts.

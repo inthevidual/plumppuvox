@@ -4,6 +4,7 @@
 //   plumppuvox_tool snapshot out.png
 //   plumppuvox_tool render in.wav out.wav [amount 0-100] [block size]
 //   plumppuvox_tool latency [sample rate] [block size]
+//   plumppuvox_tool selfcheck
 
 #include "PluginEditor.h"
 #include "PluginProcessor.h"
@@ -147,6 +148,47 @@ int latency (double sampleRate, int blockSize)
 }
 }
 
+// Guards against static initialisation order problems (see the colours in
+// PlumppuLook.h): every material must hold its colour, and the rendered
+// interface must actually contain the blue of the flag and the badge.
+int selfcheck()
+{
+    using namespace plumppu;
+    int failures = 0;
+    const auto expect = [&failures] (const char* name, juce::Colour got, juce::Colour want)
+    {
+        const bool ok = got == want;
+        std::cout << name << ": " << got.toDisplayString (true) << (ok ? " OK" : " FAIL") << "\n";
+        failures += ok ? 0 : 1;
+    };
+    expect ("materials::flagBlue", materials::flagBlue.colour, colours::flagBlue);
+    expect ("materials::bluePaint", materials::bluePaint.colour, colours::flagBlue);
+    expect ("materials::brushedBlue", materials::brushedBlue.colour, colours::flagBlue);
+    expect ("materials::blueInk", materials::blueInk.colour, colours::flagBlue);
+    expect ("materials::ivory", materials::ivory.colour, colours::ivory);
+    expect ("materials::ink", materials::ink.colour, colours::engraving);
+    expect ("materials::whiteInk", materials::whiteInk.colour, colours::enamelWhite);
+    expect ("colours::flagBlue", colours::flagBlue, juce::Colour (0xff003580));
+
+    PlumppuVoxProcessor processor;
+    std::unique_ptr<juce::AudioProcessorEditor> editor (processor.createEditor());
+    editor->setVisible (true);
+    const auto image = editor->createComponentSnapshot (editor->getLocalBounds(), true, 1.0f);
+    int blue = 0;
+    for (int y = 0; y < image.getHeight(); ++y)
+        for (int x = 0; x < image.getWidth(); ++x)
+        {
+            const auto c = image.getPixelAt (x, y);
+            if (c.getBlue() > 60 && c.getBlue() > c.getRed() + 40)
+                ++blue;
+        }
+    const bool blueOk = blue > image.getWidth() * image.getHeight() / 100;
+    std::cout << "blue pixels in interface: " << blue << (blueOk ? " OK" : " FAIL") << "\n";
+    failures += blueOk ? 0 : 1;
+
+    return failures == 0 ? 0 : 1;
+}
+
 int main (int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI gui;
@@ -165,6 +207,9 @@ int main (int argc, char** argv)
         return latency (args.size() > 1 ? args[1].getDoubleValue() : 48000.0,
                         args.size() > 2 ? args[2].getIntValue() : 512);
 
-    std::cerr << "usage: plumppuvox_tool snapshot|render|latency ...\n";
+    if (args.size() >= 1 && args[0] == "selfcheck")
+        return selfcheck();
+
+    std::cerr << "usage: plumppuvox_tool snapshot|render|latency|selfcheck ...\n";
     return 2;
 }
