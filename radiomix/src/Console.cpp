@@ -1,5 +1,5 @@
 #include "Console.h"
-#include "Strings.h"
+#include "Texts.h"
 
 namespace radiomix
 {

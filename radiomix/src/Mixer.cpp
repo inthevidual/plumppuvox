@@ -1,7 +1,7 @@
 #include "Mixer.h"
 #include "Automix.h"
 #include "Rider.h"
-#include "Strings.h"
+#include "Texts.h"
 #include "plumppuvox_engine.h"
 
 #include <deque>

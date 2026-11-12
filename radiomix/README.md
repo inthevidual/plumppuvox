@@ -83,7 +83,7 @@ leaves it out.
 - `radiomix/src/Media.*` – reading files, ffmpeg, writing the video back
 - `radiomix/src/Faceplate.*` – the panel: relief, logo, displays
 - `radiomix/src/Console.*` – the window's component: files, switch, key
-- `radiomix/src/Strings.h` – every text, in English and Swedish
+- `radiomix/src/Texts.h` – every text, in English and Swedish
 - `radiomix/NOTES.md` – the design notes it was built from
 - Uses Ren's engine (`engine/`), Lagom's rider (`lagom/src/Rider.*`) and the
   shared look (`src/plumppu/`)

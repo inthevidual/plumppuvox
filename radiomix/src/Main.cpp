@@ -5,7 +5,7 @@
 //   PlumppuRadiomix --snapshot <out.png> [--state empty|ready|mixing] [--file <f>] [--lang en|sv] [--loudness -14..-18]
 //   PlumppuRadiomix --selfcheck
 #include "Console.h"
-#include "Strings.h"
+#include "Texts.h"
 
 #include <iostream>
 

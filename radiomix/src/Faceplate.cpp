@@ -1,5 +1,5 @@
 #include "Faceplate.h"
-#include "Strings.h"
+#include "Texts.h"
 #include "RadiomixData.h"
 
 using namespace plumppu;
