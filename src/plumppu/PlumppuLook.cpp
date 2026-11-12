@@ -984,6 +984,121 @@ void drawLamps (juce::Graphics& g, juce::Rectangle<float> area, int lampCount,
 //==============================================================================
 namespace
 {
+constexpr float toggleRingRadius = 16.0f;
+constexpr float toggleLeverLength = 24.0f;
+const Material creamPlastic { juce::Colour (0xfff3dca6), 0.05f, 0.30f };
+const Material chrome { juce::Colour (0xffcfd2d6), 0.9f, 0.24f, true };
+
+juce::Image renderLever (juce::Point<float> centre, float angle, float scale)
+{
+    const juce::Point<float> dir (std::sin (angle), -std::cos (angle));
+    const auto tip = centre + dir * toggleLeverLength;
+    const float tipRadius = 6.8f, shaftRadius = 2.4f, nutRadius = 7.0f;
+    const auto box = juce::Rectangle<float> (centre, tip).expanded (nutRadius + 2.0f);
+    Surface s (box, scale);
+
+    for (int y = 0; y < s.getHeight(); ++y)
+        for (int x = 0; x < s.getWidth(); ++x)
+        {
+            const auto p = s.positionOf (x, y);
+            float height = -1.0f, cover = 0.0f;
+            const Material* m = nullptr;
+
+            // Chrome bushing nut around the pivot
+            const float dn = p.getDistanceFrom (centre);
+            const float nutCover = clamp01 ((nutRadius - dn) * scale + 0.5f);
+            if (nutCover > 0.0f)
+            {
+                height = 0.8f + 0.8f * std::sqrt (juce::jmax (0.0f, 1.0f - juce::square (dn / nutRadius)));
+                cover = nutCover;
+                m = &chrome;
+            }
+
+            // The shaft rises towards the viewer as it leans out
+            const auto rel = p - centre;
+            const float along = juce::jlimit (0.0f, toggleLeverLength, rel.x * dir.x + rel.y * dir.y);
+            const float across = (rel - dir * along).getDistanceFromOrigin();
+            const float shaftCover = clamp01 ((shaftRadius - across) * scale + 0.5f);
+            if (shaftCover > 0.0f)
+            {
+                const float h = 1.6f + 1.4f * along / toggleLeverLength
+                              + 0.8f * shaftRadius * std::sqrt (juce::jmax (0.0f, 1.0f - juce::square (across / shaftRadius)));
+                if (h > height) { height = h; m = &chrome; }
+                cover = juce::jmax (cover, shaftCover);
+            }
+
+            // Cream ball tip
+            const float dt = p.getDistanceFrom (tip);
+            const float tipCover = clamp01 ((tipRadius - dt) * scale + 0.5f);
+            if (tipCover > 0.0f)
+            {
+                const float h = 3.0f + 0.6f * tipRadius * std::sqrt (juce::jmax (0.0f, 1.0f - juce::square (dt / tipRadius)));
+                if (h > height) { height = h; m = &creamPlastic; }
+                cover = juce::jmax (cover, tipCover);
+            }
+
+            s.alphaAt (x, y) = cover;
+            if (m != nullptr)
+            {
+                s.heightAt (x, y) = height;
+                s.setMaterial (x, y, *m, 1.0f);
+            }
+        }
+
+    return s.render (false, false);
+}
+}
+
+void buildToggleRing (Surface& s, juce::Point<float> c)
+{
+    // A ribbed ring nut screwed down on the panel, with the lever's slot
+    const float r = toggleRingRadius, hole = 7.5f;
+    s.forEach (juce::Rectangle<float> (2 * r, 2 * r).withCentre (c).expanded (1.0f), [&] (int px, int py, juce::Point<float> p)
+    {
+        const auto d = p - c;
+        const float dist = d.getDistanceFromOrigin();
+        const float cover = clamp01 ((r - dist) * s.getScale() + 0.5f) * clamp01 ((dist - hole) * s.getScale() + 0.5f);
+        if (cover <= 0.0f)
+            return;
+
+        const float ribs = 0.12f * std::cos (std::atan2 (d.y, d.x) * 36.0f) * smooth ((dist - (r - 3.0f)) / 3.0f);
+        const float dome = 1.6f * roundOver ((r - dist) / 2.0f) * roundOver ((dist - hole) / 1.5f);
+        s.heightAt (px, py) += cover * (dome + ribs);
+        s.setMaterial (px, py, creamPlastic, cover);
+    });
+}
+
+void drawToggleLever (juce::Graphics& g, juce::Point<float> centre, float angle)
+{
+    struct Cache { float angle = -100.0f, scale = 0.0f; juce::Point<float> centre; juce::Image image; juce::Rectangle<float> box; };
+    static Cache caches[3];
+    const float scale = juce::jmax (1.0f, g.getInternalContext().getPhysicalPixelScaleFactor());
+    const juce::Point<float> dir (std::sin (angle), -std::cos (angle));
+
+    // The lever's shadow falls away from the window, longer at the tip
+    juce::Path shadow;
+    shadow.addEllipse (juce::Rectangle<float> (14.0f, 14.0f).withCentre (centre));
+    const auto tip = centre + dir * toggleLeverLength;
+    shadow.addEllipse (juce::Rectangle<float> (13.6f, 13.6f).withCentre (tip + juce::Point<float> (3.0f, 6.0f)));
+    juce::DropShadow (juce::Colours::black.withAlpha (0.45f), 6, { 2, 4 }).drawForPath (g, shadow);
+
+    auto& c = caches[angle < -0.01f ? 0 : angle > 0.01f ? 2 : 1];   // one per position
+    if (c.image.isNull() || c.angle != angle || c.scale != scale || c.centre != centre)
+    {
+        c.image = renderLever (centre, angle, scale);
+        c.box = juce::Rectangle<float> (centre, tip).expanded (7.0f + 2.0f);
+        c.angle = angle;
+        c.scale = scale;
+        c.centre = centre;
+    }
+    // The shadow left its colour (and so its opacity) in the context
+    g.setOpacity (1.0f);
+    g.drawImage (c.image, c.box);
+}
+
+//==============================================================================
+namespace
+{
 constexpr int gearTeeth = 30;
 constexpr float gearRoot = 0.88f;                    // root circle, as a fraction of the tip radius
 constexpr float toothTip = 0.21f, toothRoot = 0.32f;  // half widths, as fractions of the pitch

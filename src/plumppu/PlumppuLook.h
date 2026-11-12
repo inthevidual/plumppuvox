@@ -208,6 +208,13 @@ void drawLampRow (juce::Graphics&, juce::Rectangle<float> area, int lampCount, f
 void drawLamps (juce::Graphics&, juce::Rectangle<float> area, int lampCount,
                 const std::function<float (int)>& brightness);
 
+// A three-way lever switch like a guitar's pickup selector: a ribbed cream
+// ring nut on the panel (part of the faceplate) and a chrome lever with a
+// cream ball tip, drawn at run time. angle is the lever's lean from
+// straight up, in radians.
+void buildToggleRing (Surface&, juce::Point<float> centre);
+void drawToggleLever (juce::Graphics&, juce::Point<float> centre, float angle);
+
 // Black Meccano gear wheel with a brass dome nut, used as a knob. The slider's bounds must leave
 // knobShadowMargin around the knob for its shadow.
 constexpr float knobShadowMargin = 30.0f;
